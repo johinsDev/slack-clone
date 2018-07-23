@@ -1,11 +1,14 @@
 import React from 'react';
 import { withFormik } from 'formik';
 import {
-  Button, Input, Container, Header,
+  Button, Input, Container, Header, Form,
 } from 'semantic-ui-react';
 import { graphql } from 'react-apollo';
 import { compose } from 'ramda';
 import gql from 'graphql-tag';
+
+import MessageError from '../components/MessageError';
+
 
 const Login = (props) => {
   const {
@@ -14,6 +17,7 @@ const Login = (props) => {
     handleBlur,
     handleSubmit,
     isSubmitting,
+    errors,
   } = props;
 
   return (
@@ -21,26 +25,35 @@ const Login = (props) => {
       <Header as="h2">
         Login
       </Header>
-      <Input
-        name="email"
-        value={email}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="Email"
-        fluid
-      />
-      <Input
-        name="password"
-        onChange={handleChange}
-        onBlur={handleBlur}
-        value={password}
-        type="password"
-        placeholder="Password"
-        fluid
-      />
-      <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
-        Submit
-      </Button>
+      <Form>
+        <Form.Field error={!!errors.email}>
+          <Input
+            name="email"
+            value={email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="Email"
+            fluid
+          />
+        </Form.Field>
+        <Form.Field error={!!errors.password}>
+          <Input
+            name="password"
+            onChange={handleChange}
+            onBlur={handleBlur}
+            value={password}
+            type="password"
+            placeholder="Password"
+            fluid
+          />
+        </Form.Field>
+        <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+          Submit
+        </Button>
+      </Form>
+      {Object.keys(errors).length ? (
+        <MessageError errors={errors} />
+      ) : null}
     </Container>
   );
 };
@@ -63,27 +76,27 @@ export default compose(
   graphql(loginMutation),
   withFormik({
     mapPropsToValues: () => ({ email: '', password: '' }),
-    validate: (values) => {
-      const errors = {};
-      if (!values.email) {
-        errors.email = 'Required';
-      } else if (
-        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)
-      ) {
-        errors.email = 'Invalid email address';
-      }
-      return errors;
-    },
-    handleSubmit: async ({ email, password }, { props, setSubmitting }) => {
+    handleSubmit: async ({ email, password }, { props, setSubmitting, setErrors }) => {
       const { mutate } = props;
       const response = await mutate({
         variables: { email, password },
       });
       setSubmitting(false);
-      const { ok, token, refreshToken } = response.data.login;
+      const {
+        ok, token, refreshToken, errors,
+      } = response.data.login;
+
       if (ok) {
         localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
+        props.history.push('/');
+      }
+      if (errors) {
+        const errMap = [];
+        errors.forEach((err) => {
+          errMap[err.path] = err.message;
+        });
+        setErrors(errMap);
       }
     },
   }),
