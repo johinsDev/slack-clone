@@ -65,10 +65,19 @@ export default compose(
     mapPropsToValues: () => ({ name: '' }),
     handleSubmit: async ({ name }, { props, setSubmitting, setErrors }) => {
       const { mutate } = props;
-      const response = await mutate({
-        variables: { name },
-      });
-      setSubmitting(false);
+
+      let response = null;
+
+      try {
+        response = await mutate({
+          variables: { name },
+        });
+        setSubmitting(false);
+      } catch (err) {
+        this.props.history.push('/login');
+        return;
+      }
+
       const {
         ok, errors,
       } = response.data.createTeam;
@@ -76,6 +85,7 @@ export default compose(
       if (ok) {
         props.history.push('/');
       }
+
       if (errors) {
         const errMap = [];
         errors.forEach((err) => {
