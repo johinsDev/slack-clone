@@ -6,7 +6,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         unique: true,
       },
-    }
+    },
   );
 
   Team.associate = (models) => {
@@ -16,6 +16,9 @@ export default (sequelize, DataTypes) => {
         name: 'teamId',
         field: 'team_id',
       },
+    });
+    Team.hasMany(models.Channel, {
+      as: 'Channels',
     });
     Team.belongsTo(models.User, {
       foreignKey: 'owner',
