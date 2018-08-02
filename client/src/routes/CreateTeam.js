@@ -51,6 +51,9 @@ const loginMutation = gql`
   mutation CreateTeamMutation($name: String!) {
     createTeam(name: $name) {
       ok
+      team {
+        id
+      }
       errors {
         path
         message
@@ -79,11 +82,11 @@ export default compose(
       }
 
       const {
-        ok, errors,
+        ok, errors, team,
       } = response.data.createTeam;
 
       if (ok) {
-        props.history.push('/');
+        props.history.push(`/view-team/${team.id}`);
       }
 
       if (errors) {
